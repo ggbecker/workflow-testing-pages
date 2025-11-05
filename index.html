@@ -116,6 +116,78 @@
             font-size: 0.8em;
             font-weight: 600;
         }
+        .link-button {
+            display: inline-block;
+            padding: 4px 8px;
+            margin-left: 8px;
+            background: #0366d6;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.75em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .link-button:hover {
+            background: #0256c7;
+        }
+        .link-button:active {
+            background: #024ea5;
+        }
+        .copy-notification {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+        .copy-notification.show {
+            display: block;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .run-section:target {
+            animation: highlight 2s ease-out;
+        }
+        @keyframes highlight {
+            0% {
+                background: #fff3cd;
+            }
+            100% {
+                background: white;
+            }
+        }
+        .result-card:target {
+            animation: highlight-card 2s ease-out;
+            border-left-color: #0366d6;
+        }
+        @keyframes highlight-card {
+            0% {
+                background: #fff3cd;
+            }
+            100% {
+                background: #f6f8fa;
+            }
+        }
+        .env-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
     <script>
         function toggleRun(runId) {
@@ -129,40 +201,128 @@
                 icon.textContent = '▶';
             }
         }
+
+        function copyLink(anchor) {
+            const url = window.location.origin + window.location.pathname + '#' + anchor;
+
+            // Copy to clipboard
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    showNotification('Link copied to clipboard!');
+                }).catch(err => {
+                    // Fallback method
+                    fallbackCopy(url);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopy(url);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showNotification('Link copied to clipboard!');
+            } catch (err) {
+                showNotification('Failed to copy link');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('copy-notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // On page load, expand the section if there's a hash
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.location.hash) {
+                const hash = window.location.hash.substring(1);
+
+                // Check if it's an environment result
+                if (hash.startsWith('env-')) {
+                    const parts = hash.split('-');
+                    if (parts.length >= 2) {
+                        const runId = parts[1];
+                        const content = document.getElementById('run-' + runId);
+                        const icon = document.getElementById('icon-' + runId);
+                        if (content && content.classList.contains('collapsed')) {
+                            content.classList.remove('collapsed');
+                            if (icon) icon.textContent = '▼';
+                        }
+                    }
+                }
+                // Check if it's a run section
+                else if (hash.startsWith('run-')) {
+                    const runId = hash.replace('run-', '');
+                    const content = document.getElementById('run-' + runId);
+                    const icon = document.getElementById('icon-' + runId);
+                    if (content && content.classList.contains('collapsed')) {
+                        content.classList.remove('collapsed');
+                        if (icon) icon.textContent = '▼';
+                    }
+                }
+
+                // Scroll to the element
+                setTimeout(() => {
+                    const element = document.getElementById(hash);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+            }
+        });
     </script>
 </head>
 <body>
+    <div id="copy-notification" class="copy-notification"></div>
     <h1>GitHub Actions Test Results - Historical View</h1>
 
     <div class="summary">
         <h2>Summary</h2>
         <div class="result-item">
             <span class="result-label">Total Test Runs (Last 2 Weeks):</span>
-            <span class="result-value">1</span>
-        </div>
-        <div class="result-item">
-            <span class="result-label">Total Environments Tested:</span>
             <span class="result-value">2</span>
         </div>
         <div class="result-item">
+            <span class="result-label">Total Environments Tested:</span>
+            <span class="result-value">4</span>
+        </div>
+        <div class="result-item">
             <span class="result-label">Report Generated:</span>
-            <span class="result-value timestamp">2025-11-05 13:55:47 UTC</span>
+            <span class="result-value timestamp">2025-11-05 14:29:08 UTC</span>
         </div>
     </div>
 
-    <div class="run-section">
+    <div class="run-section" id="run-0">
         <div class="run-header" onclick="toggleRun(0)">
             <div>
-                <h2><span class="badge">LATEST</span> Run #1</h2>
-                <div class="run-meta">2025-11-05 13:55:47 UTC - 2 environments tested</div>
+                <h2>
+                    <span class="badge">LATEST</span> Run #2
+                    <button class="link-button" onclick="event.stopPropagation(); copyLink('run-0');" title="Copy link to this run">🔗 Link</button>
+                </h2>
+                <div class="run-meta">2025-11-05 14:29:08 UTC - 2 environments tested - Run ID: 19105322747</div>
             </div>
             <span class="toggle-icon" id="icon-0">▼</span>
         </div>
         <div class="run-content" id="run-0">
             <div class="results-grid">
 
-                <div class="result-card">
-                    <h3>Linux - Python 3.12.12</h3>
+                <div class="result-card" id="env-0-1">
+                    <div class="env-header">
+                        <h3>Linux - Python 3.12.12</h3>
+                        <button class="link-button" onclick="copyLink('env-0-1');" title="Copy link to this environment">🔗</button>
+                    </div>
                     <div class="result-item">
                         <span class="result-label">Platform:</span>
                         <span class="result-value">Linux-6.11.0-1018-azure-x86_64-with-glibc2.39</span>
@@ -177,8 +337,67 @@
                     </div>
                 </div>
 
-                <div class="result-card">
-                    <h3>Linux - Python 3.11.14</h3>
+                <div class="result-card" id="env-0-2">
+                    <div class="env-header">
+                        <h3>Linux - Python 3.11.14</h3>
+                        <button class="link-button" onclick="copyLink('env-0-2');" title="Copy link to this environment">🔗</button>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Platform:</span>
+                        <span class="result-value">Linux-6.11.0-1018-azure-x86_64-with-glibc2.39</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Architecture:</span>
+                        <span class="result-value">64bit</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Machine:</span>
+                        <span class="result-value">x86_64</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="run-section" id="run-1">
+        <div class="run-header" onclick="toggleRun(1)">
+            <div>
+                <h2>
+                    Run #1
+                    <button class="link-button" onclick="event.stopPropagation(); copyLink('run-1');" title="Copy link to this run">🔗 Link</button>
+                </h2>
+                <div class="run-meta">2025-11-05 13:55:47 UTC - 2 environments tested - Run ID: 19104321230</div>
+            </div>
+            <span class="toggle-icon" id="icon-1">▼</span>
+        </div>
+        <div class="run-content" id="run-1">
+            <div class="results-grid">
+
+                <div class="result-card" id="env-1-1">
+                    <div class="env-header">
+                        <h3>Linux - Python 3.12.12</h3>
+                        <button class="link-button" onclick="copyLink('env-1-1');" title="Copy link to this environment">🔗</button>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Platform:</span>
+                        <span class="result-value">Linux-6.11.0-1018-azure-x86_64-with-glibc2.39</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Architecture:</span>
+                        <span class="result-value">64bit</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Machine:</span>
+                        <span class="result-value">x86_64</span>
+                    </div>
+                </div>
+
+                <div class="result-card" id="env-1-2">
+                    <div class="env-header">
+                        <h3>Linux - Python 3.11.14</h3>
+                        <button class="link-button" onclick="copyLink('env-1-2');" title="Copy link to this environment">🔗</button>
+                    </div>
                     <div class="result-item">
                         <span class="result-label">Platform:</span>
                         <span class="result-value">Linux-6.11.0-1018-azure-x86_64-with-glibc2.39</span>
